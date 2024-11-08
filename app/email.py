@@ -24,3 +24,4 @@ def send_email(subject, sender, recipients, text_body, html_body,
                args=(current_app._get_current_object(), msg)).start()
         
 #..
+#..3
