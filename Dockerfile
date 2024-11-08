@@ -5,9 +5,12 @@ RUN apt-get update && apt-get install -y \
     libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
+# Upgrade pip to avoid issues with older versions
+RUN pip install --upgrade pip
+
 # Copy the requirements file first and install dependencies
-COPY requirements.txt requirements.txt
-RUN pip install --no-cache-dir -r requirements.txt
+COPY requirements.txt /requirements.txt
+RUN pip install --no-cache-dir -r /requirements.txt
 
 # Install other dependencies explicitly (like gunicorn, pymysql, cryptography)
 RUN pip install --no-cache-dir gunicorn pymysql cryptography
@@ -31,4 +34,3 @@ EXPOSE 5000
 
 # Use the boot script to start the application
 ENTRYPOINT ["./boot.sh"]
-
