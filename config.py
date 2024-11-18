@@ -1,6 +1,7 @@
 import os
 from dotenv import load_dotenv
 
+
 basedir = os.path.abspath(os.path.dirname(__file__))
 load_dotenv(os.path.join(basedir, '.env'))
 
@@ -22,3 +23,10 @@ class Config:
     ELASTICSEARCH_URL = os.environ.get('ELASTICSEARCH_URL')
     REDIS_URL = os.environ.get('REDIS_URL') or 'redis://'
     POSTS_PER_PAGE = 25
+
+    print("MAIL_SERVER:", os.getenv("MAIL_SERVER"))
+    print("MAIL_PORT:", os.getenv("MAIL_PORT"))
+    print("MAIL_USE_TLS:", os.getenv("MAIL_USE_TLS"))
+    print("MAIL_USE_SSL:", os.getenv("MAIL_USE_SSL"))
+    print("MAIL_USERNAME:", os.getenv("MAIL_USERNAME"))
+    print("MAIL_PASSWORD:", os.getenv("MAIL_PASSWORD"))
