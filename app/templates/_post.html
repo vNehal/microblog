@@ -27,6 +27,23 @@
                                 '{{ g.locale }}');">{{ _('Translate') }}</a>
                 </span>
                 {% endif %}
+                <br>
+                <!-- Bookmark feature -->
+                <span>
+                    {% if post.id in bookmarked_post_ids %}
+                        <form action="{{ url_for('main.remove_bookmark', post_id=post.id) }}" method="post" style="display:inline;">
+                            <button type="submit" class="btn btn-link text-danger p-0" style="font-size: 0.9rem;">
+                                <i class="fas fa-bookmark"></i> Remove Bookmark
+                            </button>
+                        </form>
+                    {% else %}
+                        <form action="{{ url_for('main.bookmark', post_id=post.id) }}" method="post" style="display:inline;">
+                            <button type="submit" class="btn btn-link text-primary p-0" style="font-size: 0.9rem;">
+                                <i class="far fa-bookmark"></i> Bookmark
+                            </button>
+                        </form>
+                    {% endif %}
+                </span>
             </td>
         </tr>
     </table>

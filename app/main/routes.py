@@ -15,6 +15,8 @@ from flask import current_app, render_template, flash, redirect, url_for, reques
 from flask_login import login_required, current_user
 from werkzeug.utils import secure_filename
 from app.main import bp
+from app.models import Bookmark
+
 
 
 
@@ -47,6 +49,20 @@ def index():
     posts = db.paginate(current_user.following_posts(), page=page,
                         per_page=current_app.config['POSTS_PER_PAGE'],
                         error_out=False)
+    # Preprocess bookmarked post IDs
+    bookmarked_post_ids = [bookmark.post_id for bookmark in current_user.bookmarks]
+    next_url = url_for('main.index', page=posts.next_num) if posts.has_next else None
+    prev_url = url_for('main.index', page=posts.prev_num) if posts.has_prev else None
+    return render_template(
+        'index.html',
+        title=_('Home'),
+        form=form,
+        posts=posts.items,
+        next_url=next_url,
+        prev_url=prev_url,
+        bookmarked_post_ids=bookmarked_post_ids
+    )
+
     next_url = url_for('main.index', page=posts.next_num) \
         if posts.has_next else None
     prev_url = url_for('main.index', page=posts.prev_num) \
@@ -64,6 +80,8 @@ def explore():
     posts = db.paginate(query, page=page,
                         per_page=current_app.config['POSTS_PER_PAGE'],
                         error_out=False)
+    bookmarked_post_ids = [bookmark.post_id for bookmark in current_user.bookmarks]
+
     next_url = url_for('main.explore', page=posts.next_num) \
         if posts.has_next else None
     prev_url = url_for('main.explore', page=posts.prev_num) \
@@ -279,3 +297,35 @@ def upload_profile_pic():
             return redirect(url_for('main.user', username=current_user.username))
 
     return redirect(url_for('main.user', username=current_user.username))
+
+@bp.route('/bookmark/<int:post_id>', methods=['POST'])
+@login_required
+def bookmark(post_id):
+    post = db.session.get(Post, post_id)
+    if post is None:
+        flash(_('Post not found'), 'warning')
+        return redirect(request.referrer or url_for('main.explore'))
+
+    # Check if already bookmarked
+    if db.session.query(Bookmark).filter_by(user_id=current_user.id, post_id=post_id).first():
+        flash(_('This post is already bookmarked!'), 'info')
+        return redirect(url_for('main.index'))
+
+    bookmark = Bookmark(user_id=current_user.id, post_id=post.id)
+    db.session.add(bookmark)
+    db.session.commit()
+    flash(_('Post bookmarked successfully!'), 'success')
+    return redirect(url_for('main.index'))
+
+@bp.route('/remove_bookmark/<int:post_id>', methods=['POST'])
+@login_required
+def remove_bookmark(post_id):
+    bookmark = db.session.query(Bookmark).filter_by(user_id=current_user.id, post_id=post_id).first()
+    if not bookmark:
+        flash(_('Bookmark not found'), 'warning')
+        return redirect(url_for('main.index'))
+
+    db.session.delete(bookmark)
+    db.session.commit()
+    flash(_('Bookmark removed successfully!'), 'success')
+    return redirect(url_for('main.index'))

@@ -108,6 +108,10 @@ class User(PaginatedAPIMixin, UserMixin, db.Model):
     profile_pic: so.Mapped[Optional[str]] = so.mapped_column(
         sa.String(128), default='default.png'
     )
+    bookmarks = db.relationship('Bookmark', back_populates='user', lazy='dynamic')
+    
+    posts = db.relationship('Post', back_populates='author', lazy='dynamic')
+
     last_message_read_time: so.Mapped[Optional[datetime]]
     token: so.Mapped[Optional[str]] = so.mapped_column(
         sa.String(32), index=True, unique=True)
@@ -299,8 +303,9 @@ class Post(SearchableMixin, db.Model):
 
     author: so.Mapped[User] = so.relationship(back_populates='posts')
 
+    bookmarked_by = db.relationship('Bookmark', back_populates='post', lazy='dynamic')
     def __repr__(self):
-        return '<Post {}>'.format(self.body)
+        return f'<Post {self.body}>'
 
 
 class Message(db.Model):
@@ -358,4 +363,16 @@ class Task(db.Model):
         job = self.get_rq_job()
         return job.meta.get('progress', 0) if job is not None else 100
 
+
+class Bookmark(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    post_id = db.Column(db.Integer, db.ForeignKey('post.id'), nullable=False)
+    timestamp = db.Column(db.DateTime, index=True, default=datetime.now(timezone.utc))
+
+    user = db.relationship('User', back_populates='bookmarks')
+    post = db.relationship('Post', back_populates='bookmarked_by')
+
+    def __repr__(self):
+        return f'<Bookmark User {self.user_id} Post {self.post_id}>'
 ##...
