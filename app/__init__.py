@@ -12,6 +12,10 @@ from elasticsearch import Elasticsearch
 from redis import Redis
 import rq
 from config import Config
+from flask import Flask
+
+
+
 
 
 def get_locale():
@@ -26,6 +30,20 @@ login.login_message = _l('Please log in to access this page.')
 mail = Mail()
 moment = Moment()
 babel = Babel()
+
+def create_app(config_class=Config):
+    app = Flask(__name__)
+    app.config.from_object(config_class)
+
+    db.init_app(app)
+    migrate.init_app(app, db)
+    login.init_app(app)
+
+    # Register blueprints
+    from app.main import main as main_blueprint
+    app.register_blueprint(main_blueprint)
+
+    return app
 
 
 def create_app(config_class=Config):
@@ -97,3 +115,4 @@ def create_app(config_class=Config):
 
 
 from app import models
+

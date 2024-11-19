@@ -1,5 +1,5 @@
 from datetime import datetime, timezone
-from flask import render_template, flash, redirect, url_for, request, g, \
+from flask import app, render_template, flash, redirect, url_for, request, g, \
     current_app
 from flask_login import current_user, login_required
 from flask_babel import _, get_locale
@@ -10,7 +10,12 @@ from app.main.forms import EditProfileForm, EmptyForm, PostForm, SearchForm, \
     MessageForm
 from app.models import User, Post, Message, Notification
 from app.translate import translate
+import os
+from flask import current_app, render_template, flash, redirect, url_for, request
+from flask_login import login_required, current_user
+from werkzeug.utils import secure_filename
 from app.main import bp
+
 
 
 @bp.before_app_request
@@ -239,3 +244,38 @@ def notifications():
         'data': n.get_data(),
         'timestamp': n.timestamp
     } for n in notifications]
+
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+
+def allowed_file(filename):
+    """Check if a file extension is valid."""
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+@bp.route('/upload_profile_pic', methods=['POST'])
+@login_required
+def upload_profile_pic():
+    if request.method == 'POST':
+        # Check if a file is uploaded
+        if 'profile_pic' not in request.files:
+            flash('No file part')
+            return redirect(url_for('main.user', username=current_user.username))
+
+        file = request.files['profile_pic']
+
+        if file.filename == '':
+            flash('No selected file')
+            return redirect(url_for('main.user', username=current_user.username))
+
+        if file and allowed_file(file.filename):
+            filename = secure_filename(file.filename)
+            upload_folder = os.path.join(current_app.root_path, 'static/profile_pics')
+            file.save(os.path.join(upload_folder, filename))
+
+            # Update the user's profile picture in the database
+            current_user.profile_pic = filename
+            db.session.commit()
+
+            flash('Profile picture updated successfully!')
+            return redirect(url_for('main.user', username=current_user.username))
+
+    return redirect(url_for('main.user', username=current_user.username))

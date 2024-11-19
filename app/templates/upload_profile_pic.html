@@ -1,0 +1,5 @@
+<h3>Upload Profile Picture</h3>
+<form method="POST" action="{{ url_for('main.upload_profile_pic') }}" enctype="multipart/form-data">
+    <input type="file" name="profile_pic" accept="image/*">
+    <button type="submit" class="btn btn-primary">Upload</button>
+</form>
